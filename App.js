@@ -1,8 +1,9 @@
 import React from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { TouchableOpacity } from 'react-native';
 
 import HomeScreen from './src/screens/HomeScreen';
@@ -16,7 +17,10 @@ import RateUsScreen from './src/screens/RateUsScreen';
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 
-function DrawerNavigator({ navigation }) {
+// Drawer con navegación desde el ícono del carrito
+function DrawerNavigator() {
+  const navigation = useNavigation();
+
   return (
     <Drawer.Navigator
       screenOptions={{
@@ -29,8 +33,13 @@ function DrawerNavigator({ navigation }) {
         headerStyle: { backgroundColor: '#E29A2E' },
         headerTintColor: 'white',
         headerRight: () => (
-          <TouchableOpacity onPress={() => navigation.navigate('Cart')}>
-            <Ionicons name="cart-outline" size={24} color="white" style={{ marginRight: 15 }} />
+          <TouchableOpacity onPress={() => navigation.navigate('Main', { screen: 'Carrito' })}>
+            <Ionicons
+              name="cart-outline"
+              size={24}
+              color="white"
+              style={{ marginRight: 15 }}
+            />
           </TouchableOpacity>
         ),
       }}
@@ -39,24 +48,45 @@ function DrawerNavigator({ navigation }) {
       <Drawer.Screen name="Details" component={DetailsScreen} />
       <Drawer.Screen name="Califícanos" component={RateUsScreen}/>
       <Drawer.Screen name="Ajustes" component={SettingsScreen} />
+      <Drawer.Screen
+        name="Carrito"
+        component={CartScreen}
+        options={{
+          headerRight: () => (
+            <TouchableOpacity onPress={() => navigation.navigate('Main', { screen: 'Inicio' })}>
+              <Ionicons
+                name="home-outline"
+                size={24}
+                color="white"
+                style={{ marginRight: 15 }}
+              />
+            </TouchableOpacity>
+          ),
+          
+        }}
+      />
     </Drawer.Navigator>
   );
+  
 }
 
+// Stack principal
 function RootStack() {
-  const [isSignedIn, setIsSignedIn] = React.useState(false);
+  let isSignedIn = true; // Activado para saltarse la pantalla de login
+  // const [isSignedIn, setIsSignedIn] = React.useState(false); // Activar login si se necesita
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {isSignedIn ? (
         <>
           <Stack.Screen name="Main" component={DrawerNavigator} />
-          <Stack.Screen name="Cart" component={CartScreen} />
         </>
       ) : (
         <>
           <Stack.Screen name="Login">
-            {(props) => <LoginScreen {...props} setIsSignedIn={setIsSignedIn} />}
+            {(props) => (
+              <LoginScreen {...props} setIsSignedIn={setIsSignedIn} />
+            )}
           </Stack.Screen>
           <Stack.Screen name="SignupScreen" component={SignupScreen} />
         </>
@@ -65,6 +95,7 @@ function RootStack() {
   );
 }
 
+// App principal
 export default function App() {
   return (
     <NavigationContainer>
