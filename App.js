@@ -1,4 +1,5 @@
 import React from 'react';
+import { NativeBaseProvider } from 'native-base';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -12,7 +13,7 @@ import DetailsScreen from './src/screens/DetailsScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import SignupScreen from './src/screens/SignupScreen';
 import CartScreen from './src/screens/CartScreen';
-import RateUsScreen from './src/screens/RateUsScreen';
+import PayScreen from './src/screens/PayScreen';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -46,7 +47,6 @@ function DrawerNavigator() {
     >
       <Drawer.Screen name="Inicio" component={HomeScreen} />
       <Drawer.Screen name="Details" component={DetailsScreen} />
-      <Drawer.Screen name="Califícanos" component={RateUsScreen}/>
       <Drawer.Screen name="Ajustes" component={SettingsScreen} />
       <Drawer.Screen
         name="Carrito"
@@ -61,8 +61,24 @@ function DrawerNavigator() {
                 style={{ marginRight: 15 }}
               />
             </TouchableOpacity>
-          ),
-          
+          ),          
+        }}
+      />
+      <Drawer.Screen
+        name="Pago"
+        component={PayScreen}
+        options={{
+          drawerItemStyle: { display: 'none' },
+          headerRight: () => (
+            <TouchableOpacity onPress={() => navigation.navigate('Main', { screen: 'Inicio' })}>
+              <Ionicons
+                name="home-outline"
+                size={24}
+                color="white"
+                style={{ marginRight: 15 }}
+              />
+            </TouchableOpacity>
+          ),          
         }}
       />
     </Drawer.Navigator>
@@ -80,6 +96,7 @@ function RootStack() {
       {isSignedIn ? (
         <>
           <Stack.Screen name="Main" component={DrawerNavigator} />
+          
         </>
       ) : (
         <>
