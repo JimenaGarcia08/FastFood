@@ -1,27 +1,33 @@
-import React from 'react';
-import { NativeBaseProvider } from 'native-base';
+import React, { useState } from 'react';
+import { NativeBaseProvider, extendTheme } from 'native-base';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import { NavigationContainer, useNavigation } from '@react-navigation/native';
+import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { TouchableOpacity } from 'react-native';
 
 import HomeScreen from './src/screens/HomeScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
-import DetailsScreen from './src/screens/DetailsScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import SignupScreen from './src/screens/SignupScreen';
 import CartScreen from './src/screens/CartScreen';
 import PayScreen from './src/screens/PayScreen';
+import RateUsScreen from './src/screens/RateUsScreen';
+import ContactUsScreen from './src/screens/ContactUsScreen';
+import HelpScreen from './src/screens/HelpScreen';
+
+const theme = extendTheme({
+  config: {
+    useSystemColorMode: false,
+    initialColorMode: 'light',
+  },
+});
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 
-// Drawer con navegación desde el ícono del carrito
-function DrawerNavigator() {
-  const navigation = useNavigation();
-
+function DrawerNavigator({ navigation }) {
   return (
     <Drawer.Navigator
       screenOptions={{
@@ -46,8 +52,11 @@ function DrawerNavigator() {
       }}
     >
       <Drawer.Screen name="Inicio" component={HomeScreen} />
-      <Drawer.Screen name="Details" component={DetailsScreen} />
+      <Drawer.Screen name="Perfil" component={ProfileScreen} />
+      <Drawer.Screen name="Contáctanos" component={ContactUsScreen} />
+      <Drawer.Screen name="Califícanos" component={RateUsScreen} />
       <Drawer.Screen name="Ajustes" component={SettingsScreen} />
+      <Drawer.Screen name="Ayuda" component={HelpScreen} />
       <Drawer.Screen
         name="Carrito"
         component={CartScreen}
@@ -61,7 +70,7 @@ function DrawerNavigator() {
                 style={{ marginRight: 15 }}
               />
             </TouchableOpacity>
-          ),          
+          ),
         }}
       />
       <Drawer.Screen
@@ -78,26 +87,20 @@ function DrawerNavigator() {
                 style={{ marginRight: 15 }}
               />
             </TouchableOpacity>
-          ),          
+          ),
         }}
       />
     </Drawer.Navigator>
   );
-  
 }
 
-// Stack principal
 function RootStack() {
-  let isSignedIn = true; // Activado para saltarse la pantalla de login
-  // const [isSignedIn, setIsSignedIn] = React.useState(false); // Activar login si se necesita
+  const [isSignedIn, setIsSignedIn] = useState(false); 
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {isSignedIn ? (
-        <>
-          <Stack.Screen name="Main" component={DrawerNavigator} />
-          
-        </>
+        <Stack.Screen name="Main" component={DrawerNavigator} />
       ) : (
         <>
           <Stack.Screen name="Login">
@@ -116,7 +119,9 @@ function RootStack() {
 export default function App() {
   return (
     <NavigationContainer>
-      <RootStack />
+      <NativeBaseProvider theme={theme}>
+        <RootStack />
+      </NativeBaseProvider>
     </NavigationContainer>
   );
 }
