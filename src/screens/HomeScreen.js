@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, TextInput, Alert } from 'react-native';
-import { Box, Heading, AspectRatio, Image, Text, Stack, VStack, HStack, NativeBaseProvider, ScrollView, Icon, Button } from 'native-base';
+import { Box, Heading, AspectRatio, Image, Text, Stack, VStack, HStack, NativeBaseProvider, ScrollView, Icon, Button, Skeleton } from 'native-base';
 import { Ionicons } from '@expo/vector-icons';
 
 const products = [
@@ -28,15 +28,28 @@ function Card({ name, price, image }) {
       <Stack p="4" space={2} alignItems="center">
         <Heading size="sm">{name}</Heading>
         <Text fontWeight="bold" fontSize="md" color="#000000" textAlign="center">{price}</Text>
-        <Button 
-          leftIcon={<Icon as={Ionicons} name="cart" size="5" color="white" />} 
-          bg="#F2622E" 
+        <Button
+          leftIcon={<Icon as={Ionicons} name="cart" size="5" color="white" />}
+          bg="#F2622E"
           w="full"
-          onPress={handleAddToCart}  // <-- Aquí agregamos la alerta
+          onPress={handleAddToCart}
         >
           Comprar
         </Button>
       </Stack>
+    </Box>
+  );
+}
+
+function SkeletonCard() {
+  return (
+    <Box flex={1} maxW="48%" rounded="lg" overflow="hidden" borderColor="coolGray.200" borderWidth="1" p="4">
+      <Skeleton h="150" w="100%" mb="4" />
+      <VStack space={2}>
+        <Skeleton.Text lines={1} />
+        <Skeleton.Text lines={1} width="40%" />
+        <Skeleton h="10" rounded="md" />
+      </VStack>
     </Box>
   );
 }
@@ -47,7 +60,6 @@ function HomeScreen() {
   return (
     <NativeBaseProvider>
       <ScrollView flex={1} p="5">
-        {/* Barra de búsqueda con ícono */}
         <View style={{
           flexDirection: "row",
           alignItems: "center",
@@ -58,7 +70,7 @@ function HomeScreen() {
           marginBottom: 10
         }}>
           <Icon as={Ionicons} name="search" size="5" color="gray.500" />
-          <TextInput 
+          <TextInput
             style={{ flex: 1, height: 40, marginLeft: 5 }}
             placeholder="Buscar..."
             value={search}
@@ -66,15 +78,14 @@ function HomeScreen() {
           />
         </View>
 
-        {/* Diseño en 2 filas de 2 columnas */}
         <VStack space={3}>
           <HStack space={3} justifyContent="center">
             <Card {...products[0]} />
             <Card {...products[1]} />
           </HStack>
           <HStack space={3} justifyContent="center">
-            <Card {...products[2]} />
-            <Card {...products[3]} />
+            <SkeletonCard />
+            <SkeletonCard />
           </HStack>
         </VStack>
       </ScrollView>

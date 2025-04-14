@@ -4,16 +4,27 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native';
+import { NativeBaseProvider, extendTheme } from 'native-base';
 
 import HomeScreen from './src/screens/HomeScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
-import DetailsScreen from './src/screens/DetailsScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import SignupScreen from './src/screens/SignupScreen';
 import CartScreen from './src/screens/CartScreen';
+import RateUsScreen from './src/screens/RateUsScreen';
+import ContactUsScreen from './src/screens/ContactUsScreen';
+import HelpScreen from './src/screens/HelpScreen';
 
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
+
+const theme = extendTheme({
+  config: {
+    useSystemColorMode: false,
+    initialColorMode: 'light',
+  },
+});
 
 function DrawerNavigator({ navigation }) {
   return (
@@ -35,8 +46,11 @@ function DrawerNavigator({ navigation }) {
       }}
     >
       <Drawer.Screen name="Inicio" component={HomeScreen} />
-      <Drawer.Screen name="Details" component={DetailsScreen} />
+      <Drawer.Screen name="Perfil" component={ProfileScreen} />
+      <Drawer.Screen name="Contáctanos" component={ContactUsScreen} />
+      <Drawer.Screen name="Califícanos" component={RateUsScreen} />
       <Drawer.Screen name="Ajustes" component={SettingsScreen} />
+      <Drawer.Screen name="Ayuda" component={HelpScreen} />
     </Drawer.Navigator>
   );
 }
@@ -66,7 +80,9 @@ function RootStack() {
 export default function App() {
   return (
     <NavigationContainer>
-      <RootStack />
+      <NativeBaseProvider theme={theme}>
+        <RootStack />
+      </NativeBaseProvider>
     </NavigationContainer>
   );
 }
