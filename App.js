@@ -16,6 +16,12 @@ import PayScreen from './src/screens/PayScreen';
 import RateUsScreen from './src/screens/RateUsScreen';
 import ContactUsScreen from './src/screens/ContactUsScreen';
 import HelpScreen from './src/screens/HelpScreen';
+import FruitsVeggiesScreen from './src/screens/Categorias/FruitsVeggiesScreen';
+import MeatsFishScreen from './src/screens/Categorias/MeatsFishScreen';
+import DairyEggsScreen from './src/screens/Categorias/DairyEggsScreen';
+import BakeryPastriesScreen from './src/screens/Categorias/BakeryPastriesScreen';
+import GroceriesScreen from './src/screens/Categorias/GroceriesScreen';
+import CleaningProductsScreen from './src/screens/Categorias/CleaningProductsScreen';
 
 const theme = extendTheme({
   config: {
@@ -52,7 +58,13 @@ function DrawerNavigator({ navigation }) {
       }}
     >
       <Drawer.Screen name="Inicio" component={HomeScreen} />
-      <Drawer.Screen name="Perfil" component={ProfileScreen} />
+      <Drawer.Screen name="Perfil" component={ProfileScreen} /> 
+      <Drawer.Screen name="Frutas y verduras" component={FruitsVeggiesScreen} />
+      <Drawer.Screen name="Carnes y pescados" component={MeatsFishScreen} />
+      <Drawer.Screen name="Huevo y lácteos" component={DairyEggsScreen} />
+      <Drawer.Screen name="Panadería y repostería" component={BakeryPastriesScreen} />
+      <Drawer.Screen name="Abarrotes" component={GroceriesScreen} />
+      <Drawer.Screen name="Limpieza y hogar" component={CleaningProductsScreen} />
       <Drawer.Screen name="Contáctanos" component={ContactUsScreen} />
       <Drawer.Screen name="Califícanos" component={RateUsScreen} />
       <Drawer.Screen name="Ajustes" component={SettingsScreen} />
@@ -61,6 +73,7 @@ function DrawerNavigator({ navigation }) {
         name="Carrito"
         component={CartScreen}
         options={{
+          drawerItemStyle: { display: 'none'},
           headerRight: () => (
             <TouchableOpacity onPress={() => navigation.navigate('Main', { screen: 'Inicio' })}>
               <Ionicons
@@ -115,7 +128,6 @@ function RootStack() {
   );
 }
 
-// App principal
 export default function App() {
   return (
     <NavigationContainer>
