@@ -1,37 +1,39 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
-import { Box, Heading, AspectRatio, Image, Text, Stack, VStack, HStack, ScrollView, Button, Icon, NativeBaseProvider } from 'native-base';
+import { 
+  Box, Heading, AspectRatio, Image, Text, Stack, 
+  VStack, HStack, ScrollView, Button, Icon, 
+  NativeBaseProvider, Skeleton, FlatList, Center
+} from 'native-base';
 import { Ionicons } from '@expo/vector-icons';
+import { db } from '../../services/firebaseConfig';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
-const bakeryAndPastries = [
-  { id: 1, name: "Pan de caja", price: "$15.00", image: "https://i5-mx.walmartimages.com/gr/images/product-images/img_large/00020825600000L.jpg"},
-  { id: 2, name: "Croissant", price: "$20.00", image: "https://panamarbakery.com/public/Image/2022/10/130571_croissant_choco_blanco95_Galeria.png"},
-  { id: 3, name: "Baguette", price: "$18.00", image: "https://sanalocura.es/wp-content/uploads/2023/06/PAN-001-BAGUETTE-DE-MAIZ-SIN-GLUTEN.jpg"},
-  { id: 4, name: "Muffin", price: "$25.00", image: "https://mojo.generalmills.com/api/public/content/ZHnR_y4FRCyGGvrEv6pLng_gmi_hi_res_jpeg.jpeg?v=cd8196c2&t=bc0cec1fd4bc4c35b967df95af8c1fcc"},
-  { id: 5, name: "Tarta de manzana", price: "$50.00", image: "https://vandemoortele.getbynder.com/transform/70e271d9-adf6-4233-92f8-536a064978a3/Hunky-chunky-apple-pie-27cm?io=transform:scale,height:800"},
-  { id: 6, name: "Galletas", price: "$30.00", image: "https://lasdeliciasdemariel.mx/wp-content/uploads/2023/09/04_GALLETA-CHISPAS-DE-CHOCOLATE-5431.jpg" }
-];
-
-function Card({ name, price, image }) {
-  const handleAddToCart = () => {
-    Alert.alert("Carrito", `${name} se ha agregado al carrito.`);
-  };
-
+function Card({ name, price, image, onAddToCart }) {
   return (
-    <Box flex={1} maxW="48%" rounded="lg" overflow="hidden" borderColor="coolGray.200" borderWidth="1" _light={{
-      backgroundColor: "gray.50"
-    }}>
+    <Box 
+      flex={1} 
+      maxW="48%" 
+      rounded="lg" 
+      overflow="hidden" 
+      borderColor="coolGray.200" 
+      borderWidth="1" 
+      _light={{ backgroundColor: "gray.50" }}
+      shadow={2}
+      m={1}
+    >
       <AspectRatio w="100%" ratio={7 / 7}>
-        <Image source={{ uri: image }} alt={name} />
+        <Image source={{ uri: image }} alt={name} resizeMode="cover" />
       </AspectRatio>
-      <Stack p="4" space={2} alignItems="center">
-        <Heading size="sm">{name}</Heading>
-        <Text fontWeight="bold" fontSize="md" color="#000000" textAlign="center">{price}</Text>
+      <Stack p="3" space={2} alignItems="center">
+        <Heading size="sm" textAlign="center">{name}</Heading>
+        <Text fontWeight="bold" fontSize="md" color="#000000">${price}</Text>
         <Button
           leftIcon={<Icon as={Ionicons} name="cart" size="5" color="white" />}
           bg="#F2622E"
           w="full"
-          onPress={handleAddToCart}
+          onPress={onAddToCart}
+          _pressed={{ opacity: 0.8 }}
         >
           Comprar
         </Button>
@@ -40,24 +42,115 @@ function Card({ name, price, image }) {
   );
 }
 
+function ProductSkeleton() {
+  return (
+    <Box flex={1} maxW="48%" m={1}>
+      <Skeleton h="160" rounded="lg" />
+      <Stack p="3" space={2}>
+        <Skeleton.Text lines={1} w="70%" alignSelf="center" />
+        <Skeleton.Text lines={1} w="40%" alignSelf="center" />
+        <Skeleton h="10" rounded="md" mt={2} />
+      </Stack>
+    </Box>
+  );
+}
+
 function BakeryPastriesScreen() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchProducts = async () => {
+    try {
+      const q = query(
+        collection(db, "productos"),
+        where("categoria", "==", "Panaderia")
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const productsData = [];
+      
+      querySnapshot.forEach((doc) => {
+        productsData.push({ id: doc.id, ...doc.data() });
+      });
+
+      setProducts(productsData);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      Alert.alert("Error", "No se pudieron cargar los productos");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchProducts();
+  };
+
+  const handleAddToCart = (product) => {
+    Alert.alert("Carrito", `${product.nombre} se ha agregado al carrito.`);
+    // Aquí podrías agregar la lógica para añadir al carrito real
+  };
+
+  const renderItem = ({ item }) => (
+    <Card 
+      name={item.nombre} 
+      price={item.precio} 
+      image={item.imagen || 'https://via.placeholder.com/150'} 
+      onAddToCart={() => handleAddToCart(item)}
+    />
+  );
+
+  const renderSkeletons = () => (
+    <HStack flexWrap="wrap" justifyContent="space-between" px={2}>
+      {[...Array(6)].map((_, index) => (
+        <ProductSkeleton key={index} />
+      ))}
+    </HStack>
+  );
+
   return (
     <NativeBaseProvider>
-      <ScrollView flex={1} p="5">
-        <VStack space={3}>
-          <HStack space={3} justifyContent="center">
-            <Card {...bakeryAndPastries[0]} />
-            <Card {...bakeryAndPastries[1]} />
-          </HStack>
-          <HStack space={3} justifyContent="center">
-            <Card {...bakeryAndPastries[2]} />
-            <Card {...bakeryAndPastries[3]} />
-          </HStack>
-          <HStack space={3} justifyContent="center">
-            <Card {...bakeryAndPastries[4]} />
-            <Card {...bakeryAndPastries[5]} />
-          </HStack>
-        </VStack>
+      <ScrollView flex={1} bg="white">
+        <Box p={4}>
+          <Heading size="xl" mb={4} color="coolGray.800">
+            Panadería
+          </Heading>
+          
+          {loading ? (
+            renderSkeletons()
+          ) : products.length === 0 ? (
+            <Center flex={1} py={10}>
+              <Text color="coolGray.500">No hay productos disponibles</Text>
+              <Button 
+                mt={4} 
+                colorScheme="orange" 
+                onPress={handleRefresh}
+                isLoading={refreshing}
+              >
+                Recargar
+              </Button>
+            </Center>
+          ) : (
+            <FlatList
+              data={products}
+              renderItem={renderItem}
+              keyExtractor={(item) => item.id}
+              numColumns={2}
+              columnWrapperStyle={{ justifyContent: 'space-between' }}
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              contentContainerStyle={{ paddingBottom: 20 }}
+              showsVerticalScrollIndicator={false}
+            />
+          )}
+        </Box>
       </ScrollView>
     </NativeBaseProvider>
   );

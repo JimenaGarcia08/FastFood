@@ -27,6 +27,7 @@ import DairyEggsScreen from './src/screens/Categorias/DairyEggsScreen';
 import BakeryPastriesScreen from './src/screens/Categorias/BakeryPastriesScreen';
 import GroceriesScreen from './src/screens/Categorias/GroceriesScreen';
 import CleaningProductsScreen from './src/screens/Categorias/CleaningProductsScreen';
+import AddProductScreen from './src/screens/AddProductScreen';
 
 const theme = extendTheme({
   config: {
@@ -72,6 +73,7 @@ function DrawerNavigator({ navigation }) {
       <Drawer.Screen name="Califícanos" component={RateUsScreen} />
       <Drawer.Screen name="Ajustes" component={SettingsScreen} />
       <Drawer.Screen name="Ayuda" component={HelpScreen} />
+      <Drawer.Screen name="Producto" component={AddProductScreen} />
       <Drawer.Screen
         name="Carrito"
         component={CartScreen}

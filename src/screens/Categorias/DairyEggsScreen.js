@@ -1,40 +1,44 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
-import { Box, Heading, AspectRatio, Image, Text, Stack, VStack, HStack, NativeBaseProvider, ScrollView, Icon, Button } from 'native-base';
+import { 
+  Box, Heading, AspectRatio, Image, Text, Stack, 
+  VStack, HStack, ScrollView, Button, Icon, 
+  NativeBaseProvider, Skeleton, FlatList, Center
+} from 'native-base';
 import { Ionicons } from '@expo/vector-icons';
+import { db } from '../../services/firebaseConfig';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
-const dairyAndEggs = [
-  { id: 1, name: "Leche", price: "$22.00", image: "https://listonic.com/phimageproxy/listonic/products/vanilla_milk.webp" },
-  { id: 2, name: "Huevos", price: "$35.00", image: "https://distribuidorayaneth.gt/wp-content/uploads/2020/05/carton-huevos.jpg" },
-  { id: 3, name: "Queso fresco", price: "$48.00", image: "https://mercadoacasa.mx/cdn/shop/products/quesofresco.jpg?v=1619022663" },
-  { id: 4, name: "Yogur natural", price: "$18.00", image: "https://jetextramar.com/wp-content/uploads/2020/07/2.yogur_.jpg" },
-  { id: 5, name: "Crema", price: "$25.00", image: "https://panoli.mx/cdn/shop/products/7501055909537-00-CH1200Wx1200H.jpg?v=1617824993" },
-  { id: 6, name: "Mantequilla", price: "$40.00", image: "https://s1.elespanol.com/2015/03/01/cocinillas/cocinillas_14758539_115741484_1024x576.jpg" }
-];
-
-function Card({ name, price, image }) {
-  const handleAddToCart = () => {
-    Alert.alert("Carrito", `${name} se ha agregado al carrito.`);
-  };
-
+function Card({ name, price, image, onAddToCart }) {
   return (
-    <Box flex={1} maxW="48%" rounded="lg" overflow="hidden" borderColor="coolGray.200" borderWidth="1" _dark={{
-      borderColor: "coolGray.600",
-      backgroundColor: "gray.700"
-    }} _light={{
-      backgroundColor: "gray.50"
-    }}>
+    <Box 
+      flex={1} 
+      maxW="48%" 
+      rounded="lg" 
+      overflow="hidden" 
+      borderColor="coolGray.200" 
+      borderWidth="1" 
+      _light={{ backgroundColor: "gray.50" }}
+      shadow={2}
+      m={1}
+    >
       <AspectRatio w="100%" ratio={7 / 7}>
-        <Image source={{ uri: image }} alt={name} />
+        <Image 
+          source={{ uri: image }} 
+          alt={name} 
+          resizeMode="cover"
+          fallbackSource={{ uri: 'https://via.placeholder.com/150' }}
+        />
       </AspectRatio>
-      <Stack p="4" space={2} alignItems="center">
-        <Heading size="sm">{name}</Heading>
-        <Text fontWeight="bold" fontSize="md" color="#000000" textAlign="center">{price}</Text>
+      <Stack p="3" space={2} alignItems="center">
+        <Heading size="sm" textAlign="center">{name}</Heading>
+        <Text fontWeight="bold" fontSize="md" color="#000000">${price}</Text>
         <Button
           leftIcon={<Icon as={Ionicons} name="cart" size="5" color="white" />}
           bg="#F2622E"
           w="full"
-          onPress={handleAddToCart}
+          onPress={onAddToCart}
+          _pressed={{ opacity: 0.8 }}
         >
           Comprar
         </Button>
@@ -43,27 +47,122 @@ function Card({ name, price, image }) {
   );
 }
 
+function ProductSkeleton() {
+  return (
+    <Box flex={1} maxW="48%" m={1}>
+      <Skeleton h="160" rounded="lg" />
+      <Stack p="3" space={2}>
+        <Skeleton.Text lines={1} w="70%" alignSelf="center" />
+        <Skeleton.Text lines={1} w="40%" alignSelf="center" />
+        <Skeleton h="10" rounded="md" mt={2} />
+      </Stack>
+    </Box>
+  );
+}
+
 function DairyEggsScreen() {
-    return (
-      <NativeBaseProvider>
-        <ScrollView flex={1} p="5">
-          <VStack space={3}>
-            <HStack space={3} justifyContent="center">
-              <Card {...dairyAndEggs[0]} />
-              <Card {...dairyAndEggs[1]} />
-            </HStack>
-            <HStack space={3} justifyContent="center">
-              <Card {...dairyAndEggs[2]} />
-              <Card {...dairyAndEggs[3]} />
-            </HStack>
-            <HStack space={3} justifyContent="center">
-              <Card {...dairyAndEggs[4]} />
-              <Card {...dairyAndEggs[5]} />
-            </HStack>
-          </VStack>
-        </ScrollView>
-      </NativeBaseProvider>
-    );
-  }
-  
-  export default DairyEggsScreen;
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchProducts = async () => {
+    try {
+      const q = query(
+        collection(db, "productos"),
+        where("categoria", "==", "Lacteos") 
+      );
+      
+      const querySnapshot = await getDocs(q);
+      const productsData = [];
+      
+      querySnapshot.forEach((doc) => {
+        productsData.push({ 
+          id: doc.id, 
+          ...doc.data(),
+          precio: typeof doc.data().precio === 'number' ? doc.data().precio.toFixed(2) : doc.data().precio
+        });
+      });
+
+      setProducts(productsData);
+    } catch (error) {
+      console.error("Error fetching dairy products:", error);
+      Alert.alert("Error", "No se pudieron cargar los productos lácteos");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchProducts();
+  };
+
+  const handleAddToCart = (product) => {
+    Alert.alert("Carrito", `${product.nombre} se ha agregado al carrito.`);
+    // Aquí podrías agregar la lógica para añadir al carrito real
+  };
+
+  const renderItem = ({ item }) => (
+    <Card 
+      name={item.nombre} 
+      price={item.precio} 
+      image={item.imagen} 
+      onAddToCart={() => handleAddToCart(item)}
+    />
+  );
+
+  const renderSkeletons = () => (
+    <HStack flexWrap="wrap" justifyContent="space-between" px={2}>
+      {[...Array(6)].map((_, index) => (
+        <ProductSkeleton key={index} />
+      ))}
+    </HStack>
+  );
+
+  return (
+    <NativeBaseProvider>
+      <ScrollView flex={1} bg="white">
+        <Box p={4}>
+          <Heading size="xl" mb={4} color="coolGray.800">
+            Lácteos y Huevos
+          </Heading>
+          
+          {loading ? (
+            renderSkeletons()
+          ) : products.length === 0 ? (
+            <Center flex={1} py={10}>
+              <Text color="coolGray.500">No hay productos lácteos disponibles</Text>
+              <Button 
+                mt={4} 
+                colorScheme="orange" 
+                onPress={handleRefresh}
+                isLoading={refreshing}
+              >
+                Recargar
+              </Button>
+            </Center>
+          ) : (
+            <FlatList
+              data={products}
+              renderItem={renderItem}
+              keyExtractor={(item) => item.id}
+              numColumns={2}
+              columnWrapperStyle={{ justifyContent: 'space-between' }}
+              refreshing={refreshing}
+              onRefresh={handleRefresh}
+              contentContainerStyle={{ paddingBottom: 20 }}
+              showsVerticalScrollIndicator={false}
+            />
+          )}
+        </Box>
+      </ScrollView>
+    </NativeBaseProvider>
+  );
+}
+
+export default DairyEggsScreen;
