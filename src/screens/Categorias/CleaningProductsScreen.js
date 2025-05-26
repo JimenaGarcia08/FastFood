@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Alert } from 'react-native';
 import { 
   Box, Heading, AspectRatio, Image, Text, Stack, 
-  VStack, HStack, ScrollView, Button, Icon, 
+  HStack, ScrollView, Button, Icon, 
   NativeBaseProvider, Skeleton, FlatList, Center
 } from 'native-base';
 import { Ionicons } from '@expo/vector-icons';
 import { db } from '../../services/firebaseConfig';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+
+import { CartContext } from '../context/CartContext';
+
 
 function Card({ name, price, image, onAddToCart }) {
   return (
@@ -60,6 +63,9 @@ function CleaningProductsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+ 
+  const { addToCart } = useContext(CartContext);
+
   const fetchProducts = async () => {
     try {
       const q = query(
@@ -93,9 +99,10 @@ function CleaningProductsScreen() {
     fetchProducts();
   };
 
+
   const handleAddToCart = (product) => {
+    addToCart(product);
     Alert.alert("Carrito", `${product.nombre} se ha agregado al carrito.`);
-    // Aquí podrías agregar la lógica para añadir al carrito real
   };
 
   const renderItem = ({ item }) => (

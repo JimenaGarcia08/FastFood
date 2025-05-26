@@ -1,51 +1,32 @@
-import React, { useState, useLayoutEffect, useRef, useEffect } from 'react';
-import { TouchableOpacity, Linking } from 'react-native';
+import React, { useLayoutEffect, useRef, useEffect, useContext, useState } from 'react';
+import { TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import {
-  VStack,
-  HStack,
-  NativeBaseProvider,
-  ScrollView,
-  Box,
-  Image,
-  Text,
-  Button,
-  Icon,
-  AlertDialog,
-  Actionsheet,
-  useDisclose,
-  Link
-} from 'native-base';
+import { VStack, HStack, NativeBaseProvider, ScrollView, Box, Image, Text, Button, Icon, AlertDialog, Actionsheet, useDisclose, Link, Center } from 'native-base';
+import { CartContext } from './context/CartContext';
+import { auth, db } from "../services/firebaseConfig";
+import { doc, onSnapshot } from "firebase/firestore"; // ✅ CAMBIO
+import { onAuthStateChanged } from "firebase/auth";
 
-const initialProducts = [
-  { id: 1, name: "Manzana", price: 10.00, image: "https://www.collinsdictionary.com/images/full/apple_158989157.jpg" },
-  { id: 2, name: "Plátano", price: 8.50, image: "https://www.collinsdictionary.com/images/full/banana_64728013.jpg" },
-];
-
-function CardCarrito({ product, onDelete, onUpdate }) {
-  const [cantidad, setCantidad] = useState(1);
-  const [isOpen, setIsOpen] = useState(false);
+function CardCarrito({ product }) {
+  const [isOpen, setIsOpen] = React.useState(false);
   const cancelRef = useRef(null);
+  const { removeFromCart, updateQuantity } = useContext(CartContext);
 
-  useEffect(() => {
-    onUpdate(product.id, cantidad);
-  }, [cantidad]);
-
-  const aumentar = () => setCantidad(prev => prev + 1);
+  const aumentar = () => updateQuantity(product.id, product.quantity + 1);
   const disminuir = () => {
-    if (cantidad === 1) {
+    if (product.quantity === 1) {
       setIsOpen(true);
     } else {
-      setCantidad(prev => prev - 1);
+      updateQuantity(product.id, product.quantity - 1);
     }
   };
 
   const handleDelete = () => {
     setIsOpen(false);
-    onDelete(product.id);
+    removeFromCart(product.id);
   };
 
-  const total = (product.price * cantidad).toFixed(2);
+  const total = (product.precio * product.quantity).toFixed(2);
 
   return (
     <>
@@ -60,8 +41,8 @@ function CardCarrito({ product, onDelete, onUpdate }) {
           bg="gray.50"
         >
           <Image
-            source={{ uri: product.image }}
-            alt={product.name}
+            source={{ uri: product.imagen }}
+            alt={product.nombre}
             resizeMode="cover"
             width={60}
             height={60}
@@ -69,14 +50,14 @@ function CardCarrito({ product, onDelete, onUpdate }) {
           />
           <VStack flex={1} ml="4" justifyContent="center">
             <Text fontSize="md" fontWeight="bold" color="black">
-              {product.name}
+              {product.nombre}
             </Text>
             <Text fontSize="sm" color="gray.500">
               ${total}
             </Text>
           </VStack>
           <VStack space={2} alignItems="center">
-            <Text color="gray.700" fontSize="sm">Cantidad: {cantidad}</Text>
+            <Text color="gray.700" fontSize="sm">Cantidad: {product.quantity}</Text>
             <HStack space={2}>
               <Button size="sm" onPress={disminuir} variant="outline" colorScheme="coolGray">
                 <Icon as={Ionicons} name="remove" size="xs" />
@@ -117,9 +98,9 @@ function CardCarrito({ product, onDelete, onUpdate }) {
 }
 
 const CartScreen = ({ navigation }) => {
-  const [products, setProducts] = useState(initialProducts);
-  const [quantities, setQuantities] = useState({});
+  const { cartItems } = useContext(CartContext);
   const { isOpen, onOpen, onClose } = useDisclose();
+  const [domicilio, setDomicilio] = useState("");
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -132,84 +113,86 @@ const CartScreen = ({ navigation }) => {
   }, [navigation]);
 
   useEffect(() => {
-    const focusUnsubscribe = navigation.addListener('focus', () => {
-      onOpen(); // Abrir cada vez que entra a la pantalla
-    });
-  
-    const blurUnsubscribe = navigation.addListener('blur', () => {
-      onClose(); // Cerrar cada vez que sale
-    });
-  
+    const focusUnsubscribe = navigation.addListener('focus', onOpen);
+    const blurUnsubscribe = navigation.addListener('blur', onClose);
     return () => {
       focusUnsubscribe();
       blurUnsubscribe();
     };
   }, [navigation]);
-  
 
-  const handleDelete = (id) => {
-    setProducts(prev => prev.filter(product => product.id !== id));
-    setQuantities(prev => {
-      const updated = { ...prev };
-      delete updated[id];
-      return updated;
+  // ✅ CAMBIO: Escuchar en tiempo real la dirección del usuario
+  useEffect(() => {
+    let unsubscribeSnapshot;
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const userRef = doc(db, "usuarios", user.uid);
+        unsubscribeSnapshot = onSnapshot(userRef, (docSnap) => {
+          if (docSnap.exists()) {
+            const userData = docSnap.data();
+            setDomicilio(userData.direccion || "Dirección no disponible");
+          } else {
+            setDomicilio("Dirección no encontrada");
+          }
+        }, (error) => {
+          console.error("Error al escuchar documento:", error);
+          setDomicilio("Error al obtener dirección");
+        });
+      } else {
+        setDomicilio("No autenticado");
+      }
     });
-  };
 
-  const handleUpdateQuantity = (id, quantity) => {
-    setQuantities(prev => ({ ...prev, [id]: quantity }));
-  };
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+    };
+  }, []);
 
-  const totalCarrito = products.reduce((acc, product) => {
-    const cantidad = quantities[product.id] || 1;
-    return acc + product.price * cantidad;
+  const totalCarrito = cartItems.reduce((acc, product) => {
+    return acc + product.precio * product.quantity;
   }, 0).toFixed(2);
 
   return (
     <NativeBaseProvider>
       <Actionsheet isOpen={isOpen} onClose={() => {}} disableOverlay hideDragIndicator>
-  <Actionsheet.Content bg="#E29A2E">
-    <HStack w="100%" px={4} py={2} justifyContent="space-between" alignItems="center" mb={4}>
-      <Text fontSize="sm" color="white" bold>
-        Enviar a Av. Tecnológico C.P. 20255
-      </Text>
-      <Link onPress={() => {}} _text={{ color: "blue.300", fontSize: "sm" }}>
-        Cambiar dirección
-      </Link>
-    </HStack>
+        <Actionsheet.Content bg="#E29A2E">
+          <HStack w="100%" px={4} py={2} justifyContent="space-between" alignItems="center" mb={4}>
+            <Text fontSize="sm" color="white" bold>
+              Enviar a {domicilio}
+            </Text>
+            <Link onPress={() => navigation.navigate('Perfil')} _text={{ color: "blue.300", fontSize: "sm" }}>
+              Cambiar dirección
+            </Link>
+          </HStack>
 
-    <Box w="100%" px={4} py={2} alignItems="center" mb={4}>
-      <Text fontSize="20" color="white">Total: ${totalCarrito}</Text>
-    </Box>
+          <Box w="100%" px={4} py={2} alignItems="center" mb={4}>
+            <Text fontSize="20" color="white">Total: ${totalCarrito}</Text>
+          </Box>
 
-    <Box w="100%" alignItems="center" mb={4}>
-    <Button
-  w="80%"
-  bg="#F2622E"
-  _text={{ color: "white", fontWeight: "bold" }}
-  borderRadius="md"
-  onPress={() => navigation.navigate('Pago')} // Navegar a PayScreen
->
-  Continuar compra
-</Button>
+          <Box w="100%" alignItems="center" mb={4}>
+            <Button w="90%" colorScheme="orange" onPress={() => navigation.navigate('Pago')}>
+              Continuar compra
+            </Button>
+          </Box>
+        </Actionsheet.Content>
+      </Actionsheet>
 
-    </Box>
-  </Actionsheet.Content>
-</Actionsheet>
-
-
-
-      <ScrollView flex={1} p="5">
-        <VStack space={3}>
-          {products.map(product => (
-            <CardCarrito
-              key={product.id}
-              product={product}
-              onDelete={handleDelete}
-              onUpdate={handleUpdateQuantity}
-            />
-          ))}
-        </VStack>
+      <ScrollView flex={1} bg="white">
+        <Box pt={2}>
+          {cartItems.length === 0 ? (
+            <Center py={10}>
+              <Text color="gray.500">Tu carrito está vacío</Text>
+            </Center>
+          ) : (
+            cartItems.map(product => (
+              <CardCarrito
+                key={product.id}
+                product={product}
+              />
+            ))
+          )}
+        </Box>
       </ScrollView>
     </NativeBaseProvider>
   );

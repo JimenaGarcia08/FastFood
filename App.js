@@ -10,6 +10,9 @@ import { onAuthStateChanged } from 'firebase/auth';
 // Importa auth correctamente desde tu configuración
 import { auth } from './src/services/firebaseConfig';
 
+// Importa el proveedor del carrito
+import { CartProvider } from './src/screens/context/CartContext';
+
 // Pantallas
 import HomeScreen from './src/screens/HomeScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
@@ -141,7 +144,9 @@ export default function App() {
   return (
     <NavigationContainer>
       <NativeBaseProvider theme={theme}>
-        <RootStack isSignedIn={isSignedIn} />
+        <CartProvider>
+          <RootStack isSignedIn={isSignedIn} />
+        </CartProvider>
       </NativeBaseProvider>
     </NavigationContainer>
   );

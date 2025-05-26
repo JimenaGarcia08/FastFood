@@ -1,12 +1,19 @@
-import React, { useLayoutEffect, useRef, useState } from 'react';
-import { TouchableOpacity, StyleSheet, View, Text, Image } from 'react-native';
+import React, { useLayoutEffect, useRef, useState, useEffect, useContext } from 'react';
+import { TouchableOpacity, StyleSheet, View, Text, Image, Platform, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AlertDialog, Button, Center, NativeBaseProvider } from 'native-base';
+import { CartContext } from './context/CartContext';
+import { auth, db } from '../services/firebaseConfig';
+import { doc, getDoc } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 
 const PayScreen = ({ navigation }) => {
   const [isOpen, setIsOpen] = useState(false);
   const cancelRef = useRef(null);
-  const onClose = () => setIsOpen(false);
+  const { cartItems } = useContext(CartContext);
+  const [userData, setUserData] = useState({ nombre: '', email: '', direccion: '' });
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -17,6 +24,74 @@ const PayScreen = ({ navigation }) => {
       ),
     });
   }, [navigation]);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const docRef = doc(db, 'usuarios', user.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setUserData({
+            nombre: data.nombre || '',
+            email: data.email || '',
+            direccion: data.direccion || '',
+          });
+        }
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const generarTicketPDF = async () => {
+    const total = cartItems.reduce((acc, item) => acc + item.precio * item.quantity, 0).toFixed(2);
+    const fecha = new Date().toLocaleString();
+
+    const contenidoHTML = `
+      <html>
+        <body>
+          <h1>Ticket de Compra</h1>
+          <p><strong>Nombre:</strong> ${userData.nombre}</p>
+          <p><strong>Email:</strong> ${userData.email}</p>
+          <p><strong>Dirección:</strong> ${userData.direccion}</p>
+          <p><strong>Fecha:</strong> ${fecha}</p>
+          <hr/>
+          <h2>Productos:</h2>
+          <ul>
+            ${cartItems.map(item =>
+              `<li>${item.nombre} x${item.quantity} - $${(item.precio * item.quantity).toFixed(2)}</li>`
+            ).join('')}
+          </ul>
+          <h2>Total: $${total}</h2>
+          <p>¡Gracias por tu compra!</p>
+        </body>
+      </html>
+    `;
+
+    if (Platform.OS === 'web') {
+      await Print.printAsync({ html: contenidoHTML });
+    } else {
+      const { uri } = await Print.printToFileAsync({ html: contenidoHTML });
+      await Sharing.shareAsync(uri);
+    }
+  };
+
+  const handleConfirm = () => {
+    setIsOpen(false);
+    setTimeout(() => {
+      generarTicketPDF();
+    }, 300);
+  };
+
+  const handleMercadoPago = async () => {
+    const url = 'https://www.mercadopago.com.mx/'; 
+    const supported = await Linking.canOpenURL(url);
+    if (supported) {
+      await Linking.openURL(url);
+    } else {
+      alert('No se pudo abrir el enlace de pago');
+    }
+  };
 
   return (
     <NativeBaseProvider>
@@ -30,7 +105,7 @@ const PayScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.buttonWithImage} onPress={() => {}}>
+          <TouchableOpacity style={styles.buttonWithImage} onPress={handleMercadoPago}>
             <Text style={styles.buttonText}>Tarjeta de crédito o débito</Text>
             <Image
               source={require('../../assets/Pago.png')}
@@ -39,14 +114,14 @@ const PayScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        <AlertDialog leastDestructiveRef={cancelRef} isOpen={isOpen} onClose={onClose}>
+        <AlertDialog leastDestructiveRef={cancelRef} isOpen={isOpen} onClose={() => setIsOpen(false)}>
           <AlertDialog.Content>
             <AlertDialog.Body>
               Tu pedido será pagado en efectivo al recibirlo. ¡Gracias por tu compra!
             </AlertDialog.Body>
             <AlertDialog.Footer>
               <Button
-                onPress={onClose}
+                onPress={handleConfirm}
                 ref={cancelRef}
                 bg="#E29A2E"
                 _text={{ color: 'white' }}

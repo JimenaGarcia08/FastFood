@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Alert } from 'react-native';
 import { 
   Box, Heading, AspectRatio, Image, Text, Stack, 
@@ -8,6 +8,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { db } from '../../services/firebaseConfig';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import { CartContext } from '../context/CartContext';
 
 function Card({ name, price, image, onAddToCart }) {
   return (
@@ -66,6 +67,7 @@ function GroceriesScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const toast = useToast();
+  const { addToCart } = useContext(CartContext); 
 
   const fetchProducts = async () => {
     try {
@@ -121,12 +123,12 @@ function GroceriesScreen() {
   };
 
   const handleAddToCart = (product) => {
+    addToCart(product);
     toast.show({
       description: `${product.nombre} agregado al carrito`,
       status: "success",
       duration: 1500
     });
-    // Aquí podrías implementar la lógica para añadir al carrito real
   };
 
   const renderItem = ({ item }) => (

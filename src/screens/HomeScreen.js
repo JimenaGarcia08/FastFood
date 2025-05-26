@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Alert } from 'react-native';
 import { 
   Box, Heading, AspectRatio, Image, Text, Stack, 
@@ -8,9 +8,19 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { db } from '../services/firebaseConfig';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
+import { CartContext } from './context/CartContext';
 
-function Card({ name, price, image, isNew }) {
+function Card({ id, name, price, image, isNew }) {
+  const { addToCart } = useContext(CartContext); // ← Usa el contexto aquí
+
   const handleAddToCart = () => {
+    const product = {
+      id,
+      nombre: name,
+      precio: price,
+      imagen: image
+    };
+    addToCart(product); // ← Agrega al carrito
     Alert.alert("Carrito", `${name} se ha agregado al carrito.`);
   };
 
@@ -40,7 +50,7 @@ function Card({ name, price, image, isNew }) {
           bg="#F2622E"
           w="full"
           size="sm"
-          onPress={handleAddToCart}
+          onPress={handleAddToCart} 
           _pressed={{ opacity: 0.8 }}
         >
           Comprar
@@ -70,6 +80,7 @@ function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [searchLoading, setSearchLoading] = useState(false);
   const toast = useToast();
+
 
 useEffect(() => {
   console.log("Estoy montando HomeScreen");
@@ -152,77 +163,46 @@ useEffect(() => {
   };
 
   return (
-    <NativeBaseProvider>
-      <ScrollView flex={1} bg="white" p={4}>
-        <Box mb={4} shadow={1} borderRadius="md" bg="white">
-          <Input
-            placeholder="Buscar productos..."
-            value={searchText}
-            onChangeText={setSearchText}
-            fontSize="md"
-            py={3}
-            px={4}
-            borderWidth={0}
-            bg="gray.100"
-            borderRadius="md"
-            InputLeftElement={
-              <Icon as={Ionicons} name="search" size={5} ml={3} color="gray.500" />
-            }
-            InputRightElement={
-              <Button 
-                size="xs" 
-                rounded="md" 
-                h="70%" 
-                mr={2} 
-                onPress={handleSearch}
-                isLoading={searchLoading}
-                bg="#F2622E"
-                _text={{ color: "white", fontWeight: "bold" }}
-              >
-                Buscar
-              </Button>
-            }
-          />
-        </Box>
+  <NativeBaseProvider>
+    <ScrollView flex={1} bg="white" p={4}>
+      <Box mb={4} shadow={1} borderRadius="md" bg="white">
+        <Input
+          placeholder="Buscar productos..."
+          value={searchText}
+          onChangeText={setSearchText}
+          fontSize="md"
+          py={3}
+          px={4}
+          borderWidth={0}
+          bg="gray.100"
+          borderRadius="md"
+          InputLeftElement={
+            <Icon as={Ionicons} name="search" size={5} ml={3} color="gray.500" />
+          }
+          InputRightElement={
+            <Button 
+              size="xs" 
+              rounded="md" 
+              h="70%" 
+              mr={2} 
+              onPress={handleSearch}
+              isLoading={searchLoading}
+              bg="#F2622E"
+              _text={{ color: "white", fontWeight: "bold" }}
+            >
+              Buscar
+            </Button>
+          }
+        />
+      </Box>
 
-        {products.length > 0 && (
-          <>
-            <Heading size="md" mb={3} color="coolGray.800">
-              Resultados de búsqueda
-            </Heading>
-            <FlatList
-              data={products}
-              renderItem={({ item }) => (
-                <Card 
-                  name={item.nombre} 
-                  price={item.precio} 
-                  image={item.imagen} 
-                  isNew={item.isNew} 
-                />
-              )}
-              keyExtractor={(item) => item.id}
-              numColumns={2}
-              columnWrapperStyle={{ justifyContent: 'space-between' }}
-              contentContainerStyle={{ paddingBottom: 20 }}
-              showsVerticalScrollIndicator={false}
-            />
-          </>
-        )}
-
-        <Heading size="md" mt={6} mb={3} color="coolGray.800">
-          Productos Destacados
-        </Heading>
-        
-        {loading ? (
-          <HStack flexWrap="wrap" justifyContent="space-between">
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-          </HStack>
-        ) : (
+      {products.length > 0 && (
+        <>
+          <Heading size="md" mb={3} color="coolGray.800">
+            Resultados de búsqueda
+          </Heading>
           <FlatList
-            data={featuredProducts}
+            data={products}
             renderItem={({ item }) => (
               <Card 
                 name={item.nombre} 
@@ -231,16 +211,48 @@ useEffect(() => {
                 isNew={item.isNew} 
               />
             )}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.id.toString()}
             numColumns={2}
             columnWrapperStyle={{ justifyContent: 'space-between' }}
             contentContainerStyle={{ paddingBottom: 20 }}
             showsVerticalScrollIndicator={false}
           />
-        )}
-      </ScrollView>
-    </NativeBaseProvider>
-  );
+        </>
+      )}
+
+      <Heading size="md" mt={6} mb={3} color="coolGray.800">
+        Productos Destacados
+      </Heading>
+      
+      {loading ? (
+        <HStack flexWrap="wrap" justifyContent="space-between">
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+          <SkeletonCard />
+        </HStack>
+      ) : (
+        <FlatList
+          data={featuredProducts}
+          renderItem={({ item }) => (
+            <Card 
+              name={item.nombre} 
+              price={item.precio} 
+              image={item.imagen} 
+              isNew={item.isNew} 
+            />
+          )}
+          keyExtractor={(item) => item.id.toString()}
+          numColumns={2}
+          columnWrapperStyle={{ justifyContent: 'space-between' }}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+    </ScrollView>
+  </NativeBaseProvider>
+);
+
 }
 
 export default HomeScreen;
