@@ -1,8 +1,9 @@
-import { Box, Heading, VStack, FormControl, Input, Button, Center, NativeBaseProvider, Image, Text, HStack, Link } from "native-base";
+import { Box, Heading, VStack, FormControl, Button, Center, NativeBaseProvider, Image, Text, HStack, Link } from "native-base";
 import { useNavigation } from '@react-navigation/native';
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../services/firebaseConfig';
+import { TextInput, StyleSheet } from 'react-native';
 
 const Login = ({ setIsSignedIn }) => {
   const navigation = useNavigation();
@@ -21,9 +22,8 @@ const Login = ({ setIsSignedIn }) => {
     setError('');
 
     try {
-      // Autenticar usuario con Firebase
       await signInWithEmailAndPassword(auth, email, password);
-      setIsSignedIn(true); // Cambiar estado de autenticación
+      setIsSignedIn(true);
     } catch (error) {
       let errorMessage = 'Error al iniciar sesión';
       
@@ -76,27 +76,23 @@ const Login = ({ setIsSignedIn }) => {
         <VStack space={3} mt="5">
           <FormControl isInvalid={!email && error}>
             <FormControl.Label>Correo</FormControl.Label>
-            <Input
+            <TextInput
               value={email}
               onChangeText={setEmail}
-              size="lg"
-              fontSize="md"
-              py="3"
+              style={styles.input}
               keyboardType="email-address"
               autoCapitalize="none"
-              placeholder="tucorreo@ejemplo.com"
+              placeholder="Correo"
             />
           </FormControl>
 
           <FormControl isInvalid={!password && error}>
             <FormControl.Label>Contraseña</FormControl.Label>
-            <Input 
-              type="password" 
-              value={password} 
+            <TextInput
+              value={password}
               onChangeText={setPassword}
-              size="lg" 
-              fontSize="md" 
-              py="3"
+              secureTextEntry={true}
+              style={styles.input}
               placeholder="••••••"
             />
           </FormControl>
@@ -132,6 +128,18 @@ const Login = ({ setIsSignedIn }) => {
     </Center>
   );
 };
+
+const styles = StyleSheet.create({
+  input: {
+    backgroundColor: "#F1F1F1",
+    borderColor: "#E29A2E",
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 16,
+  }
+});
 
 export default function LoginScreen({ setIsSignedIn }) {
   return (

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { KeyboardAvoidingView, Platform, Alert } from "react-native";
+import { KeyboardAvoidingView, Platform, Alert, TextInput, StyleSheet } from "react-native";
 import { 
-  Box, Heading, VStack, FormControl, Input, Button, Center, NativeBaseProvider, 
+  Box, Heading, VStack, FormControl, Button, Center, NativeBaseProvider, 
   HStack, Text, Link, Image, KeyboardAvoidingView as NBKeyboardAvoidingView 
 } from "native-base";
 import { useNavigation } from "@react-navigation/native";
@@ -85,40 +85,34 @@ const Signup = () => {
             <VStack space={4} mt={5}>
               <FormControl>
                 <FormControl.Label _text={{ bold: true }}>Correo</FormControl.Label>
-                <Input
+                <TextInput
                   value={email}
                   onChangeText={setEmail}
-                  size="lg"
-                  p={3}
+                  style={styles.input}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   placeholder="ejemplo@correo.com"
-                  _focus={{ borderColor: "#E29A2E" }}
                 />
               </FormControl>
 
               <FormControl>
                 <FormControl.Label _text={{ bold: true }}>Contraseña</FormControl.Label>
-                <Input
+                <TextInput
                   value={password}
                   onChangeText={setPassword}
-                  size="lg"
-                  p={3}
-                  type="password"
+                  style={styles.input}
+                  secureTextEntry
                   placeholder="Mínimo 6 caracteres"
-                  _focus={{ borderColor: "#E29A2E" }}
                 />
               </FormControl>
 
               <FormControl>
                 <FormControl.Label _text={{ bold: true }}>Domicilio</FormControl.Label>
-                <Input
+                <TextInput
                   value={address}
                   onChangeText={setAddress}
-                  size="lg"
-                  p={3}
+                  style={styles.input}
                   placeholder="Calle, número, colonia"
-                  _focus={{ borderColor: "#E29A2E" }}
                 />
               </FormControl>
 
@@ -149,5 +143,17 @@ const Signup = () => {
     </NativeBaseProvider>
   );
 };
+
+const styles = StyleSheet.create({
+  input: {
+    backgroundColor: "#F1F1F1",
+    borderColor: "#E29A2E",
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 16
+  }
+});
 
 export default Signup;

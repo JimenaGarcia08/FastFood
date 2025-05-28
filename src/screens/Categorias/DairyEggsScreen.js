@@ -8,6 +8,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { db } from '../../services/firebaseConfig';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import { useCart } from '../../context/CartContext';
 
 function Card({ name, price, image, onAddToCart }) {
   return (
@@ -64,6 +65,8 @@ function DairyEggsScreen() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const { addToCart } = useCart();
+
 
   const fetchProducts = async () => {
     try {
@@ -103,10 +106,16 @@ function DairyEggsScreen() {
   };
 
   const handleAddToCart = (product) => {
+    addToCart({
+      id: product.id,
+      name: product.nombre,
+      price: product.precio,
+      image: product.imagen || 'https://via.placeholder.com/150',
+    });
+  
     Alert.alert("Carrito", `${product.nombre} se ha agregado al carrito.`);
-    // Aquí podrías agregar la lógica para añadir al carrito real
-  };
-
+    };
+    
   const renderItem = ({ item }) => (
     <Card 
       name={item.nombre} 

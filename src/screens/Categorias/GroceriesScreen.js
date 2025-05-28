@@ -8,6 +8,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { db } from '../../services/firebaseConfig';
 import { collection, query, where, getDocs } from 'firebase/firestore';
+import { useCart } from '../../context/CartContext';
 
 function Card({ name, price, image, onAddToCart }) {
   return (
@@ -66,6 +67,7 @@ function GroceriesScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const toast = useToast();
+  const { addToCart } = useCart();
 
   const fetchProducts = async () => {
     try {
@@ -121,13 +123,15 @@ function GroceriesScreen() {
   };
 
   const handleAddToCart = (product) => {
-    toast.show({
-      description: `${product.nombre} agregado al carrito`,
-      status: "success",
-      duration: 1500
-    });
-    // Aquí podrías implementar la lógica para añadir al carrito real
-  };
+      addToCart({
+        id: product.id,
+        name: product.nombre,
+        price: product.precio,
+        image: product.imagen || 'https://via.placeholder.com/150',
+      });
+    
+      Alert.alert("Carrito", `${product.nombre} se ha agregado al carrito.`);
+      };
 
   const renderItem = ({ item }) => (
     <Card 

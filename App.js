@@ -6,11 +6,10 @@ import { createDrawerNavigator } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
 import { TouchableOpacity, ActivityIndicator, View } from 'react-native';
 import { onAuthStateChanged } from 'firebase/auth';
+import { CartProvider } from './src/context/CartContext';
 
-// Importa auth correctamente desde tu configuración
 import { auth } from './src/services/firebaseConfig';
 
-// Pantallas
 import HomeScreen from './src/screens/HomeScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
@@ -107,6 +106,7 @@ function RootStack({ isSignedIn }) {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {isSignedIn ? (
         <Stack.Screen name="Main" component={DrawerNavigator} />
+        
       ) : (
         <>
           <Stack.Screen name="Login" component={LoginScreen} />
@@ -139,10 +139,12 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
+  <NavigationContainer>
+    <CartProvider>
       <NativeBaseProvider theme={theme}>
         <RootStack isSignedIn={isSignedIn} />
       </NativeBaseProvider>
-    </NavigationContainer>
-  );
+    </CartProvider>
+  </NavigationContainer>
+);
 }

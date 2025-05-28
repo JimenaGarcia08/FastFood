@@ -2,6 +2,7 @@ import React, { useLayoutEffect, useRef, useState } from 'react';
 import { TouchableOpacity, StyleSheet, View, Text, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AlertDialog, Button, Center, NativeBaseProvider } from 'native-base';
+import { Linking } from 'react-native';
 
 const PayScreen = ({ navigation }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -29,15 +30,19 @@ const PayScreen = ({ navigation }) => {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.buttonWithImage} onPress={() => {}}>
-            <Text style={styles.buttonText}>Tarjeta de crédito o débito</Text>
+        <TouchableOpacity
+            style={styles.buttonWithImage}
+            onPress={() =>
+              Linking.openURL('https://www.sandbox.paypal.com/checkoutnow?token=FAKE123TOKEN')
+            }
+          >
+            <Text style={styles.buttonText}>PayPal</Text>
             <Image
               source={require('../../assets/Pago.png')}
               style={styles.image}
             />
           </TouchableOpacity>
-        </View>
+
 
         <AlertDialog leastDestructiveRef={cancelRef} isOpen={isOpen} onClose={onClose}>
           <AlertDialog.Content>

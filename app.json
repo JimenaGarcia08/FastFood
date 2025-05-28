@@ -23,10 +23,16 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/splash.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.jimenagarper.Demo"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "b3c67558-2c76-4a8b-8361-93b18e7a3ab4"
+      }
     }
   }
 }

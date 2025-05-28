@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Alert } from "react-native";
-import { 
-  Box, Center, Avatar, VStack, Input, ScrollView, 
-  NativeBaseProvider, Heading, Button, Text, useToast,
-  HStack, AlertDialog, Modal, Icon
-} from "native-base";
+import { Alert, TextInput, StyleSheet } from "react-native";
+import { Box, Center, Avatar, VStack, ScrollView, NativeBaseProvider, Heading, Button, Text, useToast, HStack, AlertDialog, Modal, Icon } from "native-base";
 import { Ionicons } from '@expo/vector-icons';
 import { auth, db } from "../services/firebaseConfig";
 import { doc, getDoc, setDoc } from "firebase/firestore";
@@ -26,14 +22,12 @@ const ProfileScreen = () => {
   const toast = useToast();
   const navigation = useNavigation();
 
-  // Obtener datos del usuario
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         try {
           const docRef = doc(db, "usuarios", user.uid);
           const docSnap = await getDoc(docRef);
-          
           if (docSnap.exists()) {
             setUserData({
               nombre: docSnap.data().nombre || "",
@@ -57,15 +51,12 @@ const ProfileScreen = () => {
           }
         } catch (error) {
           console.error("Error:", error);
-          toast.show({
-            description: "Error al cargar datos",
-            status: "error"
-          });
+          toast.show({ description: "Error al cargar datos", status: "error" });
         } finally {
           setLoading(false);
         }
       } else {
-        navigation.navigate("Login"); 
+        navigation.navigate("Login");
       }
     });
 
@@ -78,10 +69,7 @@ const ProfileScreen = () => {
 
   const handleSaveImageUrl = async () => {
     if (!imageUrl) {
-      toast.show({
-        description: "Por favor ingresa una URL válida",
-        status: "warning"
-      });
+      toast.show({ description: "Por favor ingresa una URL válida", status: "warning" });
       return;
     }
 
@@ -90,24 +78,17 @@ const ProfileScreen = () => {
       const user = auth.currentUser;
       if (!user) return;
 
-      // Actualizar estado y Firestore
       setUserData(prev => ({ ...prev, fotoPerfil: imageUrl }));
       await setDoc(doc(db, "usuarios", user.uid), {
         fotoPerfil: imageUrl
       }, { merge: true });
 
-      toast.show({
-        description: "Foto de perfil actualizada",
-        status: "success"
-      });
+      toast.show({ description: "Foto de perfil actualizada", status: "success" });
       setShowImageModal(false);
       setImageUrl("");
     } catch (error) {
       console.error("Error al actualizar foto:", error);
-      toast.show({
-        description: "Error al actualizar la foto",
-        status: "error"
-      });
+      toast.show({ description: "Error al actualizar la foto", status: "error" });
     } finally {
       setLoading(false);
     }
@@ -124,18 +105,12 @@ const ProfileScreen = () => {
           direccion: userData.domicilio,
           fotoPerfil: userData.fotoPerfil
         }, { merge: true });
-        
-        toast.show({
-          description: "¡Datos actualizados!",
-          status: "success"
-        });
+
+        toast.show({ description: "¡Datos actualizados!", status: "success" });
       }
     } catch (error) {
       console.error("Error:", error);
-      toast.show({
-        description: "Error al guardar",
-        status: "error"
-      });
+      toast.show({ description: "Error al guardar", status: "error" });
     } finally {
       setLoading(false);
       setEditando(false);
@@ -145,17 +120,11 @@ const ProfileScreen = () => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      navigation.replace("Login");
-      toast.show({
-        description: "Sesión cerrada",
-        status: "info"
-      });
+      navigation.navigate("Login");
+      toast.show({ description: "Sesión cerrada", status: "info" });
     } catch (error) {
       console.error("Error al cerrar sesión:", error);
-      toast.show({
-        description: "Error al cerrar sesión",
-        status: "error"
-      });
+      toast.show({ description: "Error al cerrar sesión", status: "error" });
     }
   };
 
@@ -170,21 +139,20 @@ const ProfileScreen = () => {
   return (
     <NativeBaseProvider>
       <ScrollView flex={1} bg="white" p={4}>
-        {/* Avatar y título */}
         <Center mt={4}>
-          <Avatar 
-            size="2xl" 
+          <Avatar
+            size="2xl"
             source={{ uri: userData.fotoPerfil }}
             mb={4}
           >
             {userData.nombre.charAt(0)}
           </Avatar>
-          
+
           {editando && (
-            <Button 
-              variant="outline" 
-              colorScheme="blue" 
-              size="sm" 
+            <Button
+              variant="outline"
+              colorScheme="blue"
+              size="sm"
               mb={4}
               onPress={() => setShowImageModal(true)}
               leftIcon={<Icon as={Ionicons} name="camera" size="sm" />}
@@ -192,55 +160,48 @@ const ProfileScreen = () => {
               Cambiar Foto
             </Button>
           )}
-          
+
           <Heading size="lg">Mi Perfil</Heading>
         </Center>
 
-        {/* Formulario */}
         <VStack space={4} mt={6}>
-          <Input
+          <TextInput
+            style={[styles.input, !editando && styles.disabled]}
             placeholder="Nombre"
             value={userData.nombre}
             onChangeText={(text) => handleInputChange("nombre", text)}
-            isDisabled={!editando}
-            variant="filled"
-            fontSize="md"
+            editable={editando}
           />
-          
-          <Input
+          <TextInput
+            style={[styles.input, styles.disabled]}
             placeholder="Correo"
             value={userData.correo}
-            isDisabled={true}
-            variant="filled"
-            fontSize="md"
+            editable={false}
           />
-          
-          <Input
+          <TextInput
+            style={[styles.input, !editando && styles.disabled, { height: 80 }]}
             placeholder="Domicilio"
             value={userData.domicilio}
             onChangeText={(text) => handleInputChange("domicilio", text)}
-            isDisabled={!editando}
-            variant="filled"
-            fontSize="md"
+            editable={editando}
             multiline
           />
 
-          {/* Botones de acción */}
           <VStack space={2} mt={6}>
             {editando ? (
               <HStack space={2}>
-                <Button 
-                  flex={1} 
-                  colorScheme="green" 
+                <Button
+                  flex={1}
+                  colorScheme="green"
                   onPress={handleSave}
                   isLoading={loading}
                   leftIcon={<Icon as={Ionicons} name="save" size="sm" />}
                 >
                   Guardar
                 </Button>
-                <Button 
-                  flex={1} 
-                  colorScheme="gray" 
+                <Button
+                  flex={1}
+                  colorScheme="gray"
                   onPress={() => setEditando(false)}
                   isDisabled={loading}
                   leftIcon={<Icon as={Ionicons} name="close" size="sm" />}
@@ -249,18 +210,18 @@ const ProfileScreen = () => {
                 </Button>
               </HStack>
             ) : (
-              <Button 
-                colorScheme="blue" 
+              <Button
+                colorScheme="blue"
                 onPress={() => setEditando(true)}
                 leftIcon={<Icon as={Ionicons} name="create" size="sm" />}
               >
                 Editar Perfil
               </Button>
             )}
-            
-            <Button 
-              colorScheme="red" 
-              variant="outline" 
+
+            <Button
+              colorScheme="red"
+              variant="outline"
               mt={4}
               onPress={() => setShowLogoutDialog(true)}
               leftIcon={<Icon as={Ionicons} name="log-out" size="sm" />}
@@ -270,25 +231,25 @@ const ProfileScreen = () => {
           </VStack>
         </VStack>
 
-        {/* Modal para cambiar foto por URL */}
+        {/* Modal para imagen */}
         <Modal isOpen={showImageModal} onClose={() => setShowImageModal(false)}>
           <Modal.Content maxWidth="400px">
             <Modal.CloseButton />
             <Modal.Header>Cambiar Foto de Perfil</Modal.Header>
             <Modal.Body>
               <Text mb={2}>Ingresa la URL de tu nueva foto:</Text>
-              <Input
+              <TextInput
+                style={styles.input}
                 placeholder="https://ejemplo.com/foto.jpg"
                 value={imageUrl}
                 onChangeText={setImageUrl}
                 autoCapitalize="none"
-                keyboardType="url"
               />
             </Modal.Body>
             <Modal.Footer>
               <Button.Group space={2}>
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   onPress={() => setShowImageModal(false)}
                   leftIcon={<Icon as={Ionicons} name="close" size="sm" />}
                 >
@@ -307,7 +268,7 @@ const ProfileScreen = () => {
           </Modal.Content>
         </Modal>
 
-        {/* Diálogo de confirmación */}
+        {/* Dialogo de logout */}
         <AlertDialog
           isOpen={showLogoutDialog}
           onClose={() => setShowLogoutDialog(false)}
@@ -342,5 +303,20 @@ const ProfileScreen = () => {
     </NativeBaseProvider>
   );
 };
+
+const styles = StyleSheet.create({
+  input: {
+    backgroundColor: "#F1F1F1",
+    padding: 12,
+    borderRadius: 8,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: "#ccc"
+  },
+  disabled: {
+    backgroundColor: "#e5e5e5",
+    color: "#888"
+  }
+});
 
 export default ProfileScreen;
